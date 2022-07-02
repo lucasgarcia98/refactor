@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { components, Select } from 'chakra-react-select'
 import { FaSort } from 'react-icons/fa'
-import Label from '../form/Label'
 import styled from 'styled-components'
-import { Divider } from '@chakra-ui/react'
+import { Divider, FormLabel, FormLabelProps } from '@chakra-ui/react'
 
 interface MultiSelectProps {
   custom: {
@@ -34,6 +33,24 @@ type OptionsProps = {
   label?: string
   color?: string
   colorInput?: boolean
+}
+
+interface LabelProps extends FormLabelProps {
+  title: string
+}
+
+export function Label({ title, ...rest }: LabelProps) {
+  return (
+    <FormLabel
+      fontSize={['sm', 'sm', 'md', 'md']}
+      fontWeight="normal"
+      mb="-1.2rem"
+      {...rest}
+      isTruncated
+    >
+      {title}
+    </FormLabel>
+  )
 }
 
 export default function MultiSelectChakra(props: MultiSelectProps) {

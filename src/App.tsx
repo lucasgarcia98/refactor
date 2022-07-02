@@ -27,6 +27,7 @@ function App() {
     showAll: true,
     clearState: true,
     labelSelect: 'Seleções',
+    placeholder: 'Selecione',
   }
 
   return (
