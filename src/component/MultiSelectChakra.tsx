@@ -1,7 +1,26 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { components, Select } from 'chakra-react-select'
 import { FaSort } from 'react-icons/fa'
 import Label from '../form/Label'
+import styled from 'styled-components'
+import { Divider } from '@chakra-ui/react'
+
+interface MultiSelectProps {
+  custom: {
+    clearState?: boolean
+    colorInput?: boolean
+    debug?: boolean
+    enableSearch?: boolean
+    handle: (value: any) => void
+    handleSelecionar?: (value: any) => void
+    labelSelect: string
+    name?: string
+    noOptionsSelect: string
+    options: any
+    placeholder?: string
+    showAll?: boolean
+  }
+}
 
 type ActionMetaProps = {
   name?: any
@@ -10,86 +29,104 @@ type ActionMetaProps = {
   removedValue?: any
 }
 
-type optionProps = {
-  value: string
-  label: string
+type OptionsProps = {
+  value?: string
+  label?: string
+  color?: string
+  colorInput?: boolean
 }
 
-export default function MultiSelectChakra(props: any) {
-  console.log(props)
+export default function MultiSelectChakra(props: MultiSelectProps) {
+  const {
+    clearState,
+    colorInput,
+    debug,
+    enableSearch,
+    handle,
+    handleSelecionar,
+    labelSelect,
+    name,
+    noOptionsSelect,
+    options,
+    placeholder,
+    showAll,
+  } = props.custom
+  const [selected, setSelected] = useState<any>()
+
   const selectAllOption = {
     value: '',
     label: 'Todos',
-    color: props.colorInput ? 'Black' : '',
+    color: colorInput ? 'Black' : '',
   }
 
   const [value, setValue] = useState('')
-  const valueRef = useRef(props.value)
-  valueRef.current = props.value
+  const valueRef = useRef<any>(selected)
+  valueRef.current = selected
 
-  const isSelectAllSelectedTest = () => {
+  const isSelectAllSelected = () => {
     const valueRefCurrentLength = valueRef.current.length
-    const propsOptionsLength = props.options.length
+    const propsOptionsLength = options.length
     const verifyValueRefUndefined = valueRef.current[0] != undefined
-    const verifyPropsOptionsUndefined = props.options[0] != undefined
+    const verifyPropsOptionsUndefined = options[0] != undefined
 
     return valueRefCurrentLength === propsOptionsLength &&
       verifyValueRefUndefined &&
       verifyPropsOptionsUndefined
-      ? valueRef.current[0].value === props.options[0].value
+      ? valueRef.current[0].value === options[0].value
       : null
   }
 
-  const isOptionSelected = (option: optionProps) => {
+  const isOptionSelected = (option: OptionsProps) => {
     return (
       valueRef.current.some(
-        ({ value }: optionProps) => value === option.value,
-      ) || isSelectAllSelectedTest()
+        ({ value }: OptionsProps) => value === option.value,
+      ) || isSelectAllSelected()
     )
   }
 
   const getOptions = () =>
-    props.showAll ? [selectAllOption, ...props.options] : [...props.options]
+    showAll ? [selectAllOption, ...options] : [...options]
 
-  const getValue = () => props.value
+  const getValue = () => selected
 
   const onChange = (newValue: any, actionMeta: ActionMetaProps) => {
     const { action, option, removedValue } = actionMeta
-    if (action === 'select-option' && option.value === selectAllOption.value) {
-      props.onChange(props.options, actionMeta)
+    const verifySelectedAllOption =
+      option && option.value === selectAllOption.value
+    const selectOption = action === 'select-option'
+    const deselectOption = action === 'deselect-option'
+    const removeValue = action === 'remove-value'
+    const actionClear = action === 'clear'
+
+    if (selectOption && verifySelectedAllOption) {
+      setSelected(options)
     } else if (
-      (action === 'deselect-option' &&
-        option.value === selectAllOption.value) ||
-      (action === 'remove-value' &&
-        removedValue.value === selectAllOption.value)
+      (deselectOption && verifySelectedAllOption) ||
+      (removeValue && removedValue.value === selectAllOption.value)
     ) {
-      props.onChange([], actionMeta)
-    } else if (action === 'deselect-option' && isSelectAllSelectedTest()) {
-      props.onChange(
-        props.options.filter(({ value }: any) => value !== option.value),
-        actionMeta,
-      )
+      setSelected([])
     } else {
-      action === 'clear' ? setValue('') : ''
-      props.onChange(newValue || [], actionMeta)
+      actionClear && setValue('')
+      setSelected(newValue || [])
     }
 
-    let valueSelect =
-      removedValue || (option && option.value != '')
-        ? Array.from(newValue).map((el: any) => el.value)
-        : ''
-    props.handle(valueSelect)
-    props.handleSelecionar ? props.handleSelecionar(valueSelect) : ''
+    const verifyValueSelect = removedValue || (option && option.value != '')
+
+    const valueSelect =
+      verifyValueSelect && Array.from(newValue).map((el: any) => el.value)
+
+    handle(valueSelect)
+    handleSelecionar ? handleSelecionar(valueSelect) : ''
   }
 
   useEffect(() => {
     onChange([], { action: 'clear' })
     setValue('')
-  }, [props.clearState])
+  }, [clearState])
 
   useEffect(() => {
     getOptions()
-  }, [props.options])
+  }, [options])
 
   const DropdownIndicator = (props: any) => {
     return (
@@ -100,14 +137,36 @@ export default function MultiSelectChakra(props: any) {
   }
 
   const onInputChange = (option: string, { action }: any) => {
-    if (props.enableSearch) {
+    if (enableSearch) {
       action == 'input-change' || action != 'set-value'
         ? setValue(option)
         : setValue('')
-      props.handle(option)
+      handle(option)
     } else {
       setValue('')
     }
+  }
+
+  const formatOptionLabel = ({ label, color }: OptionsProps) => {
+    const Section = styled.section`
+      display: flex;
+      align-items: center;
+    `
+
+    return (
+      <Section>
+        <Divider
+          display={color ? 'block' : 'none'}
+          width={'10px'}
+          height={'10px'}
+          backgroundColor={color}
+          borderRadius={'50%'}
+          marginRight={'5px'}
+          opacity={'1'}
+        />
+        <label>{label}</label>
+      </Section>
+    )
   }
 
   return (
@@ -116,28 +175,28 @@ export default function MultiSelectChakra(props: any) {
       onSubmit={(e) => e.preventDefault()}
     >
       <Label
-        title={props.label}
-        htmlFor={'select-' + props.name}
+        title={labelSelect}
+        htmlFor={'select-' + name}
         fontSize={'md'}
         color={'#4B5C6B'}
         marginBottom={0}
       />
       <Select
-        inputId={'select-' + props.name}
+        inputId={'select-' + name}
         isOptionSelected={isOptionSelected}
-        noOptionsMessage={() => props.noOptionsSelect}
+        noOptionsMessage={() => noOptionsSelect}
         options={getOptions()}
         components={{ DropdownIndicator }}
-        formatOptionLabel={props.formatOptionLabel}
+        formatOptionLabel={formatOptionLabel}
         value={getValue()}
         onChange={onChange}
         closeMenuOnSelect={false}
-        placeholder={props.placeholder}
+        placeholder={placeholder}
         classNamePrefix={'multi-select-chakra'}
         onInputChange={onInputChange}
         onMenuClose={() => setValue(value)}
         inputValue={value}
-        menuIsOpen={props.debug}
+        menuIsOpen={debug}
         isMulti
       />
     </form>

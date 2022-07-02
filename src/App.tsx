@@ -1,6 +1,6 @@
 import './App.css'
-import SearchMultipleFilter from './component/SearchMultiFilter'
 import { ChakraProvider } from '@chakra-ui/react'
+import MultiSelectChakra from './component/MultiSelectChakra'
 
 function App() {
   const handleSelect = (valueOption: string) => {}
@@ -20,16 +20,18 @@ function App() {
     },
   ]
 
+  const selectMulti = {
+    handle: handleSelect,
+    options: optionsSelect,
+    noOptionsSelect: 'Todas as opções selecionadas',
+    showAll: true,
+    clearState: true,
+    labelSelect: 'Seleções',
+  }
+
   return (
     <ChakraProvider>
-      <SearchMultipleFilter
-        handle={handleSelect}
-        options={optionsSelect}
-        noOptionsSelect={'Todas as opções selecionadas'}
-        showAll={true}
-        clearState={true}
-        labelSelect="Seleções"
-      />
+      <MultiSelectChakra custom={selectMulti} />
     </ChakraProvider>
   )
 }
